@@ -1,0 +1,13 @@
+server:
+  port: 9090
+
+spring:
+  datasource:
+    url: jdbc:mysql://120.26.37.73:3306/mudxx-mall?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: alimysql123456
+
+mybatis:
+  mapper-locations:
+    - classpath:mapper/*.xml
+    - classpath*:com/**/mapper/*.xml
