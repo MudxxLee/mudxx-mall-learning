@@ -4,6 +4,8 @@ import com.mudxx.mall.tiny.mbg.model.PmsBrand;
 import com.mudxx.mall.tiny.service.PmsBrandService;
 import com.mudxx.mall.tiny.common.api.CommonPage;
 import com.mudxx.mall.tiny.common.api.CommonResult;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import java.util.List;
  * 品牌管理Controller
  * Created by macro on 2019/4/19.
  */
+@Api(description = "商品品牌管理")
 @Controller
 @RequestMapping("/brand")
 public class PmsBrandController {
@@ -26,6 +29,7 @@ public class PmsBrandController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PmsBrandController.class);
 
+    @ApiOperation("获取所有品牌列表")
     @RequestMapping(value = "listAll", method = RequestMethod.GET)
     @ResponseBody
     public CommonResult<List<PmsBrand>> getBrandList() {
