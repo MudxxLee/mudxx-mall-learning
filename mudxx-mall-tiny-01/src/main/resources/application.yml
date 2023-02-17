@@ -2,8 +2,10 @@ server:
   port: 9090
 
 spring:
+  profiles:
+    include: rocketmq
   datasource:
-    url: jdbc:mysql://120.26.37.73:3306/mudxx-mall?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://120.26.37.73:3306/mudxx-mall-learning?useUnicode=true&characterEncoding=utf-8
     username: root
     password: alimysql123456
   redis:
