@@ -1,7 +1,6 @@
 package com.mudxx.mall.tiny.mq.component.rocketmq.producer.sender;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonDelay;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessage;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonResult;
@@ -52,11 +51,11 @@ public class BizCommonMessageSender {
     /**
      * 发送消息
      */
-    private RocketMqCommonResult sendMessage(Message message) {
+    public RocketMqCommonResult sendMessage(Message message) {
         beforeSendCheck();
         try {
             SendResult sendResult = bizCommonProducer.getProducer().send(message);
-            log.info("[keys={}] rocketmq common-message send result: {}", message.getKeys(), JSONObject.toJSONString(sendResult));
+            //log.info("[keys={}] rocketmq common-message send result: {}", message.getKeys(), JSONObject.toJSONString(sendResult));
             if(StrUtil.equals(SendStatus.SEND_OK.toString(), sendResult.getSendStatus().toString())) {
                 return RocketMqCommonResult.success(message.getTopic(), message.getTags(), message.getKeys());
             }

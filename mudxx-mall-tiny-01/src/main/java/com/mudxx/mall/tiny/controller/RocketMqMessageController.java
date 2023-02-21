@@ -32,18 +32,20 @@ public class RocketMqMessageController {
     @ApiOperation("发送RocketMQ消息")
     @PostMapping("/send-common")
     @ResponseBody
-    public CommonResult sendCommon(@RequestParam("msg") String msg) {
+    public CommonResult sendCommon(@RequestParam("msg") String msg, @RequestParam("keys") String keys) {
         RocketMqCommonMessage message = new RocketMqCommonMessage(rocketMqPropertiesConfig.getBizCommon().getConsumer().getBizSample());
         message.setBody(msg.getBytes(StandardCharsets.UTF_8));
+        message.setKeys(keys);
         return CommonResult.success(bizCommonMessageSender.sendCommonMessage(message));
     }
 
     @ApiOperation("发送RocketMQ延迟消息")
     @PostMapping("/send-common-delay")
     @ResponseBody
-    public CommonResult sendCommonDelay(@RequestParam("msg") String msg) {
+    public CommonResult sendCommonDelay(@RequestParam("msg") String msg, @RequestParam("keys") String keys) {
         RocketMqCommonMessage message = new RocketMqCommonMessage(rocketMqPropertiesConfig.getBizCommon().getConsumer().getBizSample());
         message.setBody(msg.getBytes(StandardCharsets.UTF_8));
+        message.setKeys(keys);
         return CommonResult.success(bizCommonMessageSender.sendDelayMessage(message, RocketMqCommonDelay.S30));
     }
 

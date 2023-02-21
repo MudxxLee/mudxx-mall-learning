@@ -6,10 +6,11 @@ package com.mudxx.mall.tiny.mq.idempotent.common;
  */
 public enum IdempotentStatusEnum {
     /**
-     *
+     * 消息消费状态枚举
      */
-    CONSUMING(0, "消息消费进行中"),
-    CONSUMED(1, "消息消费完成");
+    Consuming(1, "消费进行中"),
+    Consumed(2, "消费完成");
+
 
     private final int status;
     private final String desc;
@@ -27,11 +28,20 @@ public enum IdempotentStatusEnum {
     }
 
     public boolean isConsuming() {
-        return status == 0;
+        return this == Consuming;
     }
 
     public boolean isConsumed() {
-        return status == 1;
+        return this == Consumed;
+    }
+
+    public static IdempotentStatusEnum getStatusEnum(int status) {
+        for (IdempotentStatusEnum statusEnum : values()) {
+            if (statusEnum.getStatus() == status) {
+                return statusEnum;
+            }
+        }
+        return null;
     }
 
 }

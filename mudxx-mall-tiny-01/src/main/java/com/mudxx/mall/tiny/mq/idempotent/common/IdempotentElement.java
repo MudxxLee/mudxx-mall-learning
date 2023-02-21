@@ -1,5 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.common;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
@@ -12,6 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @ToString
+@Builder(toBuilder = true)
 public class IdempotentElement implements Serializable {
     private static final long serialVersionUID = 1799439878140424675L;
     /**

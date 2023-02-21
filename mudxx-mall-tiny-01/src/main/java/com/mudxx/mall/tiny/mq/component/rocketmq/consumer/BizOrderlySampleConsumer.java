@@ -28,44 +28,46 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix="rocketmq.biz-orderly.consumer.biz-sample", value="enabled", havingValue="true")
+@ConditionalOnProperty(prefix="rocketmq.biz-orderly.consumer.biz-sample.extra", value="enabled", havingValue="true")
 public class BizOrderlySampleConsumer {
 
     @Autowired
-    private RocketMqPropertiesConfig propertiesConfig;
+    private RocketMqPropertiesConfig properties;
 
     @Bean(name = "bizOrderlySamplePushConsumer")
     public DefaultMQPushConsumer getMonitorRocketMqConsumer() {
-        String nameServer = propertiesConfig.getNameServer();
+        String nameServer = properties.getNameServer();
         if (StrUtil.isBlank(nameServer)) {
             throw new RuntimeException("rocketmq nameServer is null !!!");
         }
-        RocketMqPropertiesConfig.ConsumerProperties bizSample = propertiesConfig.getBizOrderly().getConsumer().getBizSample();
-        if (StrUtil.isBlank(bizSample.getGroupName())) {
-            throw new RuntimeException(StrUtil.format("[{}] rocketmq consumer groupName is null !!!", bizSample.getLogHeader()));
+        RocketMqPropertiesConfig.ConsumerBasicProperties basicProperties = properties.getBizOrderly().getConsumer().getBizSample().getBasic();
+        RocketMqPropertiesConfig.ConsumerExtraProperties extraProperties = properties.getBizOrderly().getConsumer().getBizSample().getExtra();
+
+        if (StrUtil.isBlank(basicProperties.getGroupName())) {
+            throw new RuntimeException(StrUtil.format("[{}] rocketmq consumer groupName is null !!!", extraProperties.getLogHeader()));
         }
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(bizSample.getGroupName());
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(basicProperties.getGroupName());
         consumer.setMessageModel(MessageModel.CLUSTERING);
         consumer.setNamesrvAddr(nameServer);
         //consumer.setInstanceName(bizSample.getInstanceName());
-        consumer.setConsumeThreadMin(bizSample.getConsumeThreadMin());
-        consumer.setConsumeThreadMax(bizSample.getConsumeThreadMax());
-        consumer.setPullInterval(bizSample.getPullInterval());
-        consumer.setPullBatchSize(bizSample.getPullBatchSize());
-        consumer.setConsumeMessageBatchMaxSize(bizSample.getConsumeMessageBatchMaxSize());
+        consumer.setConsumeThreadMin(basicProperties.getConsumeThreadMin());
+        consumer.setConsumeThreadMax(basicProperties.getConsumeThreadMax());
+        consumer.setPullInterval(basicProperties.getPullInterval());
+        consumer.setPullBatchSize(basicProperties.getPullBatchSize());
+        consumer.setConsumeMessageBatchMaxSize(basicProperties.getConsumeMessageBatchMaxSize());
         consumer.registerMessageListener(new BizMessageListenerOrderlyImpl());
-        String topic = bizSample.getTopic();
-        String tags = bizSample.getTags();
+        String topic = basicProperties.getTopic();
+        String tags = basicProperties.getTags();
         try {
             consumer.subscribe(topic, tags);
             // 修改系统变量,保障启动多个不同ip的消费者
             //System.setProperty("rocketmq.client.name", "bizOrderlySamplePushConsumer");
             consumer.start();
             log.info("[{}] rocketmq consumer is start ... nameServer={}, groupName={}, topic={}",
-                    bizSample.getLogHeader(), nameServer, bizSample.getGroupName(), topic);
+                    extraProperties.getLogHeader(), nameServer, basicProperties.getGroupName(), topic);
         } catch (MQClientException e) {
             log.error("[{}] rocketmq consumer is error !!! nameServer={}, groupName={}, topic={}",
-                    bizSample.getLogHeader(), nameServer, bizSample.getGroupName(), topic, e);
+                    extraProperties.getLogHeader(), nameServer, basicProperties.getGroupName(), topic, e);
             throw new RuntimeException(e);
         }
         return consumer;

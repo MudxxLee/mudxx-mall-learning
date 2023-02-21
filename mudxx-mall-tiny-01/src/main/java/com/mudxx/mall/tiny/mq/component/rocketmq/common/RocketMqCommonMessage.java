@@ -29,13 +29,13 @@ public class RocketMqCommonMessage implements Serializable {
     }
 
     public RocketMqCommonMessage(RocketMqPropertiesConfig.ConsumerProperties properties) {
-        this.topic = properties.getTopic();
-        this.tags = properties.getTags();
+        this.topic = properties.getBasic().getTopic();
+        this.tags = properties.getBasic().getTags();
     }
 
     public RocketMqCommonMessage(RocketMqPropertiesConfig.ConsumerProperties properties, byte[] body) {
-        this.topic = properties.getTopic();
-        this.tags = properties.getTags();
+        this.topic = properties.getBasic().getTopic();
+        this.tags = properties.getBasic().getTags();
         this.body = body;
     }
 }

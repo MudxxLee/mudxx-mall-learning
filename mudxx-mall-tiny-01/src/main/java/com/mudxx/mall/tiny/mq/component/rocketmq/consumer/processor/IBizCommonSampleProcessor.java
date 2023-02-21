@@ -1,5 +1,7 @@
 package com.mudxx.mall.tiny.mq.component.rocketmq.consumer.processor;
 
+import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessageExt;
+
 /**
  * @author laiwen
  */
@@ -7,13 +9,10 @@ public interface IBizCommonSampleProcessor {
 
 	/**
 	 * 消费消息
-	 * @param msgId
-	 * @param topic
-	 * @param tags
-	 * @param keys
-	 * @param body
+	 * @param messageExt 消息
+	 * @param idempotent 是否幂等消费
 	 * @return
 	 */
-	boolean consumeMessage(String msgId, String topic, String tags, String keys, byte[] body);
-	
+	void consumeMessage(RocketMqCommonMessageExt messageExt, boolean idempotent);
+
 }

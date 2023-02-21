@@ -21,17 +21,23 @@ rocketmq:
     consumer:
       #消费者业务
       biz-sample:
-        enabled: true #是否启动
-        log-header: biz-common-sample-consumer
-        group-name: biz-common-sample-consumer-group
-        instance-name: biz-common-sample-consumer-instance
-        topic: biz-common-sample-topic
-        tags: '*'
-        consumeThreadMin: 20 #内置消费线程池的core size
-        consumeThreadMax: 64 #内置消费线程池的max size
-        pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
-        pullBatchSize: 32 #一次最大拉取的批量大小
-        consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
+        # 基础属性配置
+        basic:
+          group-name: biz-common-sample-consumer-group
+          instance-name: biz-common-sample-consumer-instance
+          topic: biz-common-sample-topic
+          tags: '*'
+          consumeThreadMin: 20 #内置消费线程池的core size
+          consumeThreadMax: 64 #内置消费线程池的max size
+          pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
+          pullBatchSize: 32 #一次最大拉取的批量大小
+          consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
+        # 扩展属性配置
+        extra:
+          enabled: true #是否启动
+          log-header: biz-common-sample-consumer
+          expire-milli-seconds: 60000 #消费中的消息，在过期时间内不允许重复
+          retain-expire-milli-seconds: 86400000 #消息留存过期时间，在过期时间内不允许重复
   #biz-orderly
   biz-orderly:
     #生产者配置
@@ -44,37 +50,20 @@ rocketmq:
     consumer:
       #消费者业务
       biz-sample:
-        enabled: true #是否启动
-        log-header: biz-orderly-sample-consumer
-        group-name: biz-orderly-sample-consumer-group
-        instance-name: biz-orderly-sample-consumer-instance
-        topic: biz-orderly-sample-topic
-        tags: '*'
-        consumeThreadMin: 20 #内置消费线程池的core size
-        consumeThreadMax: 64 #内置消费线程池的max size
-        pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
-        pullBatchSize: 32 #一次最大拉取的批量大小
-        consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
-  #biz-transactional
-  biz-transactional:
-    #生产者配置
-    producer:
-      enabled: false #是否启动
-      log-header: biz-transactional-producer
-      group-name: biz-transactional-producer-group
-      instance-name: biz-transactional-producer-instance
-    #消费者配置
-    consumer:
-      #消费者业务
-      biz-sample:
-        enabled: false #是否启动
-        log-header: biz-transactional-sample-consumer
-        group-name: biz-transactional-sample-consumer-group
-        instance-name: biz-transactional-sample-consumer-instance
-        topic: biz-transactional-sample-topic
-        tags: '*'
-        consumeThreadMin: 20 #内置消费线程池的core size
-        consumeThreadMax: 64 #内置消费线程池的max size
-        pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
-        pullBatchSize: 32 #一次最大拉取的批量大小
-        consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
+        # 基础属性配置
+        basic:
+          group-name: biz-orderly-sample-consumer-group
+          instance-name: biz-orderly-sample-consumer-instance
+          topic: biz-orderly-sample-topic
+          tags: '*'
+          consumeThreadMin: 20 #内置消费线程池的core size
+          consumeThreadMax: 64 #内置消费线程池的max size
+          pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
+          pullBatchSize: 32 #一次最大拉取的批量大小
+          consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
+        # 扩展属性配置
+        extra:
+          enabled: true #是否启动
+          log-header: biz-orderly-sample-consumer
+          expire-milli-seconds: 60000 #消费中的消息，在过期时间内不允许重复
+          retain-expire-milli-seconds: 86400000 #消息留存过期时间，在过期时间内不允许重复

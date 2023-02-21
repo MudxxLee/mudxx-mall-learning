@@ -18,7 +18,6 @@ public class RocketMqPropertiesConfig {
     private String nameServer;
     private BizCommon bizCommon = new BizCommon();
     private BizOrderly bizOrderly = new BizOrderly();
-    private BizTransactional bizTransactional = new BizTransactional();
 
     @Data
     @NoArgsConstructor
@@ -50,21 +49,6 @@ public class RocketMqPropertiesConfig {
         private ConsumerProperties bizSample;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BizTransactional {
-        private ProducerProperties producer;
-        private BizTransactionalConsumer consumer;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BizTransactionalConsumer {
-        private ConsumerProperties bizSample;
-    }
-
 
     @Data
     @NoArgsConstructor
@@ -75,11 +59,19 @@ public class RocketMqPropertiesConfig {
         private String instanceName;
     }
 
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ConsumerProperties {
-        private String logHeader;
+        private ConsumerBasicProperties basic;
+        private ConsumerExtraProperties extra;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConsumerBasicProperties {
         private String groupName;
         private String instanceName;
         private String topic;
@@ -89,6 +81,15 @@ public class RocketMqPropertiesConfig {
         private Integer pullInterval;
         private Integer pullBatchSize;
         private Integer consumeMessageBatchMaxSize;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConsumerExtraProperties {
+        private String logHeader;
+        private Long expireMilliSeconds;
+        private Long retainExpireMilliSeconds;
     }
 
 }

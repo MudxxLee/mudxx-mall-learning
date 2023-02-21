@@ -19,8 +19,6 @@ public class MudxxMallTiny01ApplicationTests {
     public void test() {
         System.out.println(JSONObject.toJSONString(config));
         System.out.println(config.getBizCommon().getProducer().getGroupName());
-        System.out.println(config.getBizOrderly().getConsumer().getBizSample().getConsumeThreadMin());
-        System.out.println(config.getBizTransactional().getConsumer().getBizSample().getConsumeThreadMin());
 
     }
 

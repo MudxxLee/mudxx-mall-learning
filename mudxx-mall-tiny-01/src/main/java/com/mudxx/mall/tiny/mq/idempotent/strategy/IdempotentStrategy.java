@@ -1,41 +1,24 @@
 package com.mudxx.mall.tiny.mq.idempotent.strategy;
 
-
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentElement;
-import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentStatusEnum;
+import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentResult;
+
+import java.util.function.Function;
 
 /**
  * 消息幂等策略
- * @author laiwen
+ * @author laiw
+ * @date 2023/2/17 16:09
  */
 public interface IdempotentStrategy {
 
     /**
-     * 设置消息正在消费
-     * @param element 消息基础信息
-     * @param consumingExpireMilliSeconds 过期时长
-     * @return true: 允许消费 false: 不允许消费
+     * 具体实现
+     * @param element 消息幂等基础信息
+     * @param callbackMethod 回调方法
+     * @param callbackMethodParam 回调方法参数
+     * @return
      */
-    boolean setConsuming(IdempotentElement element, long consumingExpireMilliSeconds);
-
-    /**
-     * 标记消息消费完成
-     * @param element 消息基础信息
-     * @param consumedExpireMilliSeconds 过期时长
-     */
-    void markConsumed(IdempotentElement element, long consumedExpireMilliSeconds);
-
-    /**
-     * 获取消息状态
-     * @param element 消息基础信息
-     * @return IdempotentStatusEnum
-     */
-    Integer getStatus(IdempotentElement element);
-
-    /**
-     * 删除
-     * @param element 消息基础信息
-     */
-    void delete(IdempotentElement element);
+    IdempotentResult invoke(IdempotentElement element, Function<Object, Boolean> callbackMethod, Object callbackMethodParam);
 
 }
