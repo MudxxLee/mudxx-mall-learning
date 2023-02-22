@@ -2,7 +2,7 @@ package com.mudxx.mall.tiny.mq.idempotent.strategy.impl;
 
 import com.mudxx.mall.tiny.mq.idempotent.common.*;
 import com.mudxx.mall.tiny.mq.idempotent.component.IdempotentComponent;
-import com.mudxx.mall.tiny.mq.idempotent.strategy.AbstractIdempotentStrategy;
+import com.mudxx.mall.tiny.mq.idempotent.strategy.IdempotentStrategy;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Function;
@@ -16,14 +16,19 @@ import java.util.function.Function;
  * @date 2023/2/17 16:09
  */
 @Slf4j
-public class PerfectIdempotentStrategy extends AbstractIdempotentStrategy {
+public class PerfectIdempotentStrategy implements IdempotentStrategy {
+
+    private IdempotentComponent component;
+
+    private IdempotentConfig config;
 
     public PerfectIdempotentStrategy(IdempotentComponent component, IdempotentConfig config) {
-        super(component, config);
+        this.component = component;
+        this.config = config;
     }
 
     @Override
-    public IdempotentResult invoke(IdempotentElement element, Function<Object, Boolean> callbackMethod, Object callbackMethodParam) {
+    public IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam) {
         IdempotentComponent component = this.getComponent();
         try {
             // 设置消息正在消费
@@ -57,17 +62,20 @@ public class PerfectIdempotentStrategy extends AbstractIdempotentStrategy {
     /**
      * 消费消息，末尾消费失败会删除消费记录，消费成功则更新消费状态
      */
-    private IdempotentResult doBizApply(IdempotentElement element, final Function<Object, Boolean> callbackMethod, final Object callbackMethodParam) {
+    private IdempotentResult doBizApply(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
         IdempotentComponent component = this.getComponent();
-        boolean bizResult = false;
+        IdempotentBizResult bizResult = null;
         try {
             // 执行真正的消费
             bizResult = callbackMethod.apply(callbackMethodParam);
         } catch (Throwable e) {
             log.error("msgUniqKey={} 业务消费异常(忽略异常) (component={}): {}", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());
         }
+        if(bizResult == null) {
+            bizResult = IdempotentBizResult.createDefaultFail();
+        }
         try {
-            if(bizResult) {
+            if(bizResult.getResult()) {
                 // 标记消费完成
                 log.info("msgUniqKey={} 业务消费完成,执行标记 (component={}) ", element.getMsgUniqKey(), component.getClass().getSimpleName());
                 component.markConsumed(element, this.getConfig().getRetainExpireMilliSeconds());
@@ -80,5 +88,21 @@ public class PerfectIdempotentStrategy extends AbstractIdempotentStrategy {
             log.error("msgUniqKey={} 消费去重收尾工作异常(忽略异常) (component={}) : {} ", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());
         }
         return IdempotentResult.createSuccess(bizResult);
+    }
+
+    public IdempotentComponent getComponent() {
+        return component;
+    }
+
+    public void setComponent(IdempotentComponent component) {
+        this.component = component;
+    }
+
+    public IdempotentConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(IdempotentConfig config) {
+        this.config = config;
     }
 }

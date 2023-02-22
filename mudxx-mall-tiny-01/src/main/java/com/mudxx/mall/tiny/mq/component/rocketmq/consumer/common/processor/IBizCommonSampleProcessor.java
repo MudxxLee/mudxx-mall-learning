@@ -1,4 +1,4 @@
-package com.mudxx.mall.tiny.mq.component.rocketmq.consumer.processor;
+package com.mudxx.mall.tiny.mq.component.rocketmq.consumer.common.processor;
 
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessageExt;
 

@@ -1,7 +1,7 @@
-package com.mudxx.mall.tiny.mq.component.rocketmq.consumer.idempotent;
+package com.mudxx.mall.tiny.mq.idempotent.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessageExt;
+import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentBizResult;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentConfig;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentElement;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentResult;
@@ -14,19 +14,19 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 
 /**
+ * 消息幂等-业务抽象类
  * @author laiwen
  */
 @Slf4j
-public abstract class AbstractRocketMqIdempotent {
+public abstract class AbstractIdempotentService {
 
 	private String applicationName;
 
 	private IdempotentStrategy strategy;
 
-	public AbstractRocketMqIdempotent() {
-
-	}
-
+	/**
+	 * 类构造完毕时初始化属性内容
+	 */
 	@PostConstruct
 	private void initialContext() {
 		// 消息幂等策略组件
@@ -37,7 +37,7 @@ public abstract class AbstractRocketMqIdempotent {
 		} else {
 			this.applicationName = this.presetApplicationName();
 			if(StrUtil.isBlank(this.applicationName)) {
-				throw new RuntimeException("消息幂等策略初始化异常: applicationName未设置!");
+				throw new RuntimeException("消息幂等策略业务初始化异常: applicationName未设置!");
 			}
 			// 幂等策略配置
 			IdempotentConfig config = this.presetIdempotentConfig();
@@ -73,20 +73,21 @@ public abstract class AbstractRocketMqIdempotent {
 
 	/**
 	 * 实现消息幂等策略
+	 * @param topic 消息topic
+	 * @param tags 消息标签
 	 * @param msgUniqKey 消息幂等主键
-	 * @param messageExt 消息
 	 * @param callbackMethodParam 回调方法入参
 	 * @return
 	 */
-	protected IdempotentResult idempotentConsume(String msgUniqKey, RocketMqCommonMessageExt messageExt, Object callbackMethodParam) {
+	protected IdempotentResult idempotentConsume(String topic, String tags, String msgUniqKey, Object callbackMethodParam) {
 		// 封装幂等消息
 		IdempotentElement element = IdempotentElement.builder()
 				// 设置消费者组名称
 				.applicationName(this.getApplicationName())
 				// 设置消息的topic
-				.topic(messageExt.getTopic())
+				.topic(topic)
 				// 设置消息的tag
-				.tags(StrUtil.isBlank(messageExt.getTags()) ? "" : messageExt.getTags())
+				.tags(StrUtil.isBlank(tags) ? "" : tags)
 				// 设置消息的唯一键
 				.msgUniqKey(msgUniqKey)
 			.build();
@@ -95,11 +96,11 @@ public abstract class AbstractRocketMqIdempotent {
 	}
 
 	/**
-	 * 业务回调方法
-	 * @param callbackMethodParam 回调方法入参
-	 * @return
+	 * 业务真正消费方法(在幂等设置成功后将会调用)
+	 * @param callbackMethodParam 方法入参
+	 * @return IdempotentBizResult
 	 */
-	public abstract boolean idempotentCallback(Object callbackMethodParam);
+	public abstract IdempotentBizResult idempotentCallback(Object callbackMethodParam);
 
 
 	public String getApplicationName() {

@@ -1,5 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.strategy;
 
+import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentBizResult;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentElement;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentResult;
 
@@ -19,6 +20,6 @@ public interface IdempotentStrategy {
      * @param callbackMethodParam 回调方法参数
      * @return
      */
-    IdempotentResult invoke(IdempotentElement element, Function<Object, Boolean> callbackMethod, Object callbackMethodParam);
+    IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam);
 
 }

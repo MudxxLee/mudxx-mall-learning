@@ -1,6 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.common;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @author laiw
  * @date 2023/2/14 17:01
  */
-@Getter
+@Data
 @ToString
 public class IdempotentResult implements Serializable {
     private static final long serialVersionUID = -2447598029081990954L;
@@ -24,15 +24,15 @@ public class IdempotentResult implements Serializable {
     /**
      * 业务消费结果
      */
-    private Boolean bizResult;
+    private IdempotentBizResult bizResult;
 
-    private IdempotentResult(String result, String resultMsg, Boolean bizResult) {
+    private IdempotentResult(String result, String resultMsg, IdempotentBizResult bizResult) {
         this.result = result;
         this.resultMsg = resultMsg;
         this.bizResult = bizResult;
     }
 
-    public static IdempotentResult create(IdempotentResultStatus status, String resultMsg, Boolean bizResult) {
+    public static IdempotentResult create(IdempotentResultStatus status, String resultMsg, IdempotentBizResult bizResult) {
         return new IdempotentResult(status.getStatus(), resultMsg, bizResult);
     }
 
@@ -40,7 +40,7 @@ public class IdempotentResult implements Serializable {
         return create(status, resultMsg, null);
     }
 
-    public static IdempotentResult create(IdempotentResultStatus status, Boolean bizResult) {
+    public static IdempotentResult create(IdempotentResultStatus status, IdempotentBizResult bizResult) {
         return create(status, status.getDesc(), bizResult);
     }
 
@@ -56,7 +56,7 @@ public class IdempotentResult implements Serializable {
         return create(IdempotentResultStatus.SUCCEED, resultMsg);
     }
 
-    public static IdempotentResult createSuccess(Boolean bizResult) {
+    public static IdempotentResult createSuccess(IdempotentBizResult bizResult) {
         return create(IdempotentResultStatus.SUCCEED, bizResult);
     }
 

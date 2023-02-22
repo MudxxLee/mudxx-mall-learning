@@ -1,5 +1,7 @@
 package com.mudxx.mall.tiny.mq.idempotent.common;
 
+import cn.hutool.core.util.StrUtil;
+
 /**
  * @author laiw
  * @date 2023/2/14 17:01
@@ -24,8 +26,32 @@ public enum IdempotentResultStatus  {
     public String getStatus() {
         return status;
     }
-
     public String getDesc() {
         return desc;
+    }
+
+    public static IdempotentResultStatus getIdempotentResultStatus(String status) {
+        if (StrUtil.isBlank(status)) {
+            return null;
+        }
+        for (IdempotentResultStatus resultStatus : values()) {
+            if(StrUtil.equals(resultStatus.getStatus(), status)) {
+                return resultStatus;
+            }
+        }
+        return null;
+    }
+
+    public static boolean throwException(String status) {
+        IdempotentResultStatus resultStatus = getIdempotentResultStatus(status);
+        if (resultStatus == null) {
+            return false;
+        }
+        switch (resultStatus) {
+            case SYSTEM_ERROR:
+                return true;
+            default:
+                return false;
+        }
     }
 }

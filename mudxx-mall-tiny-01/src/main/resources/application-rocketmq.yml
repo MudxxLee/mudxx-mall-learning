@@ -1,32 +1,39 @@
 #Notice
 #1.同一个消费组应该拥有完全一样的订阅关系,即订阅的topic(名称,个数)需一致
 #2.同一个机器上启动多个消费者,clientId要设置成不一样(clientId格式：ip+@+instanceName[+@unitName])
-#     解决方式: 不设置instanceName属性,默认则为进程id;设置不同的instanceName属性
+#     解决方式: 1.不设置instanceName属性,默认则为进程id; 2.设置不同的instanceName属性
 #3.需要在消费者端统一进行幂等处理(同一个消息被重复消费)
 #     解决方式: 使用数据库 + Redis实现消息消费幂 [1.Redis校验 2.数据库校验 3.同一个事务中完成三项操作(1.业务处理 2.写入到Redis缓存 3.更新表记录)]
 #             Redis存过缓存过期,容易发生缓存穿透,二者结合更优
+#4.MessageListenerConcurrently(并发消费) 和 MessageListenerOrderly(顺序消费) 区别
+#     1.并发消费的消费速度要比有序消费更快
+#     2.消费失败时的处理方式不同
+#          有序消费模式返回ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT后，消费者会立刻消费这条消息,同一个消息如果一直无法消费成功则会无限消费
+#          并发消费模式返回ConsumeConcurrentlyStatus.RECONSUME_LATER后，要过好几秒甚至十几秒才会再次消费,同一个消息到达最大消费次数之后就不会再出现
+#5.消息默认均分到队列中
+#
 
 rocketmq:
-  #服务地址
-  name-server: 120.26.37.73:9876
   #biz-common
   biz-common:
-    #生产者配置
+    #服务地址
+    name-server: 120.26.37.73:9876
+    #生产者配置(仅一个)
     producer:
       enabled: true #是否启动
-      log-header: biz-common-producer
       group-name: biz-common-producer-group
       instance-name: biz-common-producer-instance
-    #消费者配置
+    #消费者配置(可多个)
     consumer:
-      #消费者业务
+      #消费者一(自定义业务标题)
       biz-sample:
-        # 基础属性配置
+        enabled: true #是否启动
+        group-name: biz-common-sample-consumer-group
+        instance-name: biz-common-sample-consumer-instance
+        topic: biz-common-sample-topic
+        tags: '*'
+        # 基本属性配置
         basic:
-          group-name: biz-common-sample-consumer-group
-          instance-name: biz-common-sample-consumer-instance
-          topic: biz-common-sample-topic
-          tags: '*'
           consumeThreadMin: 20 #内置消费线程池的core size
           consumeThreadMax: 64 #内置消费线程池的max size
           pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
@@ -34,36 +41,24 @@ rocketmq:
           consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
         # 扩展属性配置
         extra:
-          enabled: true #是否启动
-          log-header: biz-common-sample-consumer
           expire-milli-seconds: 60000 #消费中的消息，在过期时间内不允许重复
           retain-expire-milli-seconds: 86400000 #消息留存过期时间，在过期时间内不允许重复
-  #biz-orderly
-  biz-orderly:
-    #生产者配置
-    producer:
-      enabled: true #是否启动
-      log-header: biz-orderly-producer
-      group-name: biz-orderly-producer-group
-      instance-name: biz-orderly-producer-instance
-    #消费者配置
-    consumer:
-      #消费者业务
-      biz-sample:
+      #消费者二(自定义业务标题)
+      biz-orderly:
         # 基础属性配置
+        enabled: false #是否启动
+        group-name: biz-common-orderly-consumer-group
+        instance-name: biz-common-orderly-consumer-instance
+        topic: biz-common-orderly-topic
+        tags: '*'
+        # 基本属性配置
         basic:
-          group-name: biz-orderly-sample-consumer-group
-          instance-name: biz-orderly-sample-consumer-instance
-          topic: biz-orderly-sample-topic
-          tags: '*'
           consumeThreadMin: 20 #内置消费线程池的core size
           consumeThreadMax: 64 #内置消费线程池的max size
           pullInterval: 0 #拉取的间隔(RocketMQ发起异步pull请求，得到请求后会再发起下次请求，这个间隔默认是0，表示立刻再发起)
           pullBatchSize: 32 #一次最大拉取的批量大小
-          consumeMessageBatchMaxSize: 10 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
+          consumeMessageBatchMaxSize: 1 #控制监听集合参数list的最大值(最大值是consumeMessageBatchMaxSize和pullBatchSize的较小值而定)
         # 扩展属性配置
         extra:
-          enabled: true #是否启动
-          log-header: biz-orderly-sample-consumer
           expire-milli-seconds: 60000 #消费中的消息，在过期时间内不允许重复
           retain-expire-milli-seconds: 86400000 #消息留存过期时间，在过期时间内不允许重复

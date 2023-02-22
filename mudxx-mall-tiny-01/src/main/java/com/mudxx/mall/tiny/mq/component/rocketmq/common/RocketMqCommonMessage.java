@@ -1,6 +1,6 @@
 package com.mudxx.mall.tiny.mq.component.rocketmq.common;
 
-import com.mudxx.mall.tiny.mq.component.rocketmq.config.RocketMqPropertiesConfig;
+import com.mudxx.mall.tiny.mq.component.rocketmq.config.properties.ConsumerProperties;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,14 +28,14 @@ public class RocketMqCommonMessage implements Serializable {
         this.body = body;
     }
 
-    public RocketMqCommonMessage(RocketMqPropertiesConfig.ConsumerProperties properties) {
-        this.topic = properties.getBasic().getTopic();
-        this.tags = properties.getBasic().getTags();
+    public RocketMqCommonMessage(ConsumerProperties properties) {
+        this.topic = properties.getTopic();
+        this.tags = properties.getTags();
     }
 
-    public RocketMqCommonMessage(RocketMqPropertiesConfig.ConsumerProperties properties, byte[] body) {
-        this.topic = properties.getBasic().getTopic();
-        this.tags = properties.getBasic().getTags();
+    public RocketMqCommonMessage(ConsumerProperties properties, byte[] body) {
+        this.topic = properties.getTopic();
+        this.tags = properties.getTags();
         this.body = body;
     }
 }
