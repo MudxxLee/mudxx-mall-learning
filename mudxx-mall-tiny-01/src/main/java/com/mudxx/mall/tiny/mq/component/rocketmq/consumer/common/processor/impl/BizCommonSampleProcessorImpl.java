@@ -11,10 +11,11 @@ import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentConfig;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentResult;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentResultStatus;
 import com.mudxx.mall.tiny.mq.idempotent.component.IdempotentComponent;
-import com.mudxx.mall.tiny.mq.idempotent.component.JDBCIdempotentComponent;
+import com.mudxx.mall.tiny.mq.idempotent.component.impl.RedisIdempotentComponent;
 import com.mudxx.mall.tiny.mq.idempotent.service.AbstractIdempotentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,8 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 	private BizCommonPropertiesConfig properties;
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+	@Autowired
+	private StringRedisTemplate stringRedisTemplate;
 
 	@Override
 	public String presetApplicationName() {
@@ -39,7 +42,7 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 
 	@Override
 	public IdempotentComponent presetIdempotentComponent() {
-		return new JDBCIdempotentComponent(jdbcTemplate);
+		return new RedisIdempotentComponent(stringRedisTemplate);
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 			// 幂等消费
 			IdempotentResult result = super.idempotentConsume(topic, tags, msgUniqKey, messageExt);
 			log.info("msgUniqKey={} 消息幂等处理结果 {}", msgUniqKey, result);
-			if(IdempotentResultStatus.throwException(result.getResult())) {
+			if(IdempotentResultStatus.isThrowException(result.getResult())) {
 				throw new RuntimeException(result.getResultMsg());
 			}
 			if(result.getBizResult() != null && result.getBizResult().getRetry()) {

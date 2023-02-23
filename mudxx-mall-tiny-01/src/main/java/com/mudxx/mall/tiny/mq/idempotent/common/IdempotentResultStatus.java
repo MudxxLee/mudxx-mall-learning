@@ -42,7 +42,7 @@ public enum IdempotentResultStatus  {
         return null;
     }
 
-    public static boolean throwException(String status) {
+    public static boolean isThrowException(String status) {
         IdempotentResultStatus resultStatus = getIdempotentResultStatus(status);
         if (resultStatus == null) {
             return false;

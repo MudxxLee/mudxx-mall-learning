@@ -1,9 +1,10 @@
-package com.mudxx.mall.tiny.mq.idempotent.component;
+package com.mudxx.mall.tiny.mq.idempotent.component.impl;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentElement;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentStatusEnum;
+import com.mudxx.mall.tiny.mq.idempotent.component.IdempotentComponent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +22,9 @@ public class JDBCIdempotentComponent implements IdempotentComponent {
     private final JdbcTemplate jdbcTemplate;
 
     public JDBCIdempotentComponent(JdbcTemplate jdbcTemplate) {
+        if (jdbcTemplate == null) {
+            throw new NullPointerException("jdbc template is null");
+        }
         this.jdbcTemplate = jdbcTemplate;
     }
 

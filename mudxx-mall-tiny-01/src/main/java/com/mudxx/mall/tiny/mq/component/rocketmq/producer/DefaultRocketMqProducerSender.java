@@ -1,6 +1,7 @@
 package com.mudxx.mall.tiny.mq.component.rocketmq.producer;
 
 import cn.hutool.core.util.HashUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonDelay;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessage;
@@ -34,7 +35,7 @@ public class DefaultRocketMqProducerSender extends DefaultRocketMqProducer {
      * 发送消息 延迟消费
      */
     public RocketMqCommonResult sendDelayMessage(RocketMqCommonMessage commonMessage, RocketMqCommonDelay delayTimeLevel) {
-        String keys = StrUtil.isBlank(commonMessage.getKeys()) ? StrUtil.uuid() : commonMessage.getKeys();
+        String keys = StrUtil.blankToDefault(commonMessage.getKeys(), IdUtil.simpleUUID());
         String topic = commonMessage.getTopic();
         String tags = commonMessage.getTags();
         byte[] body = commonMessage.getBody();
@@ -50,7 +51,7 @@ public class DefaultRocketMqProducerSender extends DefaultRocketMqProducer {
      * 发送消息 顺序消费
      */
     public RocketMqCommonResult sendOrderlyMessage(RocketMqCommonMessage commonMessage) {
-        String keys = StrUtil.isBlank(commonMessage.getKeys()) ? StrUtil.uuid() : commonMessage.getKeys();
+        String keys = StrUtil.blankToDefault(commonMessage.getKeys(), IdUtil.simpleUUID());
         return sendOrderlyMessage(commonMessage.getTopic(), commonMessage.getTags(), keys, commonMessage.getBody());
     }
 

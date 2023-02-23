@@ -1,5 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.service;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentBizResult;
 import com.mudxx.mall.tiny.mq.idempotent.common.IdempotentConfig;
@@ -44,10 +45,8 @@ public abstract class AbstractIdempotentService {
 			if (config == null) {
 				config = new IdempotentConfig();
 			}
-			config.setExpireMilliSeconds(config.getExpireMilliSeconds() == null ?
-					IdempotentConfig.DEFAULT_EXPIRE_MILLI_SECONDS : config.getExpireMilliSeconds());
-			config.setRetainExpireMilliSeconds(config.getRetainExpireMilliSeconds() == null ?
-					IdempotentConfig.DEFAULT_RETAIN_EXPIRE_MILLI_SECONDS : config.getRetainExpireMilliSeconds());
+			config.setExpireMilliSeconds(ObjectUtil.defaultIfNull(config.getExpireMilliSeconds(), IdempotentConfig.DEFAULT_EXPIRE_MILLI_SECONDS));
+			config.setRetainExpireMilliSeconds(ObjectUtil.defaultIfNull(config.getRetainExpireMilliSeconds(), IdempotentConfig.DEFAULT_RETAIN_EXPIRE_MILLI_SECONDS));
 			// 幂等策略
 			this.strategy = new PerfectIdempotentStrategy(component, config);
 		}
@@ -87,7 +86,7 @@ public abstract class AbstractIdempotentService {
 				// 设置消息的topic
 				.topic(topic)
 				// 设置消息的tag
-				.tags(StrUtil.isBlank(tags) ? "" : tags)
+				.tags(StrUtil.blankToDefault(tags, ""))
 				// 设置消息的唯一键
 				.msgUniqKey(msgUniqKey)
 			.build();

@@ -1,5 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.strategy.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.mudxx.mall.tiny.mq.idempotent.common.*;
 import com.mudxx.mall.tiny.mq.idempotent.component.IdempotentComponent;
 import com.mudxx.mall.tiny.mq.idempotent.strategy.IdempotentStrategy;
@@ -31,11 +32,16 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
     public IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam) {
         IdempotentComponent component = this.getComponent();
         try {
+            if(StrUtil.isBlank(element.getMsgUniqKey())) {
+                // 消息主键为空默认不设置幂等
+                IdempotentBizResult bizResult = doBizApply(element, callbackMethod, callbackMethodParam);
+                return IdempotentResult.createSuccess(bizResult);
+            }
             // 设置消息正在消费
             boolean setting = component.setConsuming(element, this.getConfig().getExpireMilliSeconds());
             if(setting) {
                 // 设置成功
-                return doBizApply(element, callbackMethod, callbackMethodParam);
+                return doBizApplyAndUpdateStatus(element, callbackMethod, callbackMethodParam);
             } else {
                 // 设置失败
                 int status = component.getStatus(element);
@@ -50,7 +56,7 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
                 } else {
                     // 非法结果，降级为直接消费
                     log.warn("msgUniqKey={} 消息状态非法，降级为直接消费 (component={}) ", element.getMsgUniqKey(), component.getClass().getSimpleName());
-                    return doBizApply(element, callbackMethod, callbackMethodParam);
+                    return doBizApplyAndUpdateStatus(element, callbackMethod, callbackMethodParam);
                 }
             }
         } catch (Exception e) {
@@ -60,10 +66,21 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
     }
 
     /**
-     * 消费消息，末尾消费失败会删除消费记录，消费成功则更新消费状态
+     * 1.执行真正的消费
+     * 2.消费失败会删除消费记录，消费成功则更新消费状态
      */
-    private IdempotentResult doBizApply(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
-        IdempotentComponent component = this.getComponent();
+    private IdempotentResult doBizApplyAndUpdateStatus(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
+        // 执行真正的消费
+        IdempotentBizResult bizResult = this.doBizApply(element, callbackMethod, callbackMethodParam);
+        // 消费失败会删除消费记录，消费成功则更新消费状态
+        this.doUpdateOrDelete(element, bizResult);
+        return IdempotentResult.createSuccess(bizResult);
+    }
+
+    /**
+     * 执行真正的消费
+     */
+    private IdempotentBizResult doBizApply(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
         IdempotentBizResult bizResult = null;
         try {
             // 执行真正的消费
@@ -74,6 +91,14 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
         if(bizResult == null) {
             bizResult = IdempotentBizResult.createDefaultFail();
         }
+        return bizResult;
+    }
+
+    /**
+     * 消费失败会删除消费记录，消费成功则更新消费状态
+     */
+    private void doUpdateOrDelete(IdempotentElement element, IdempotentBizResult bizResult) {
+        IdempotentComponent component = this.getComponent();
         try {
             if(bizResult.getResult()) {
                 // 标记消费完成
@@ -87,7 +112,6 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
         } catch (Exception e) {
             log.error("msgUniqKey={} 消费去重收尾工作异常(忽略异常) (component={}) : {} ", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());
         }
-        return IdempotentResult.createSuccess(bizResult);
     }
 
     public IdempotentComponent getComponent() {
