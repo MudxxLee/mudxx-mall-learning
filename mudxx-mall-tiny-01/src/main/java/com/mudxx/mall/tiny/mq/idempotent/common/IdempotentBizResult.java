@@ -12,33 +12,46 @@ import java.io.Serializable;
 public class IdempotentBizResult implements Serializable {
     private static final long serialVersionUID = -2447598029081990954L;
     /**
-     * 业务消费结果(true: 执行消息标记 false: 执行消息删除)
+     * 业务消费结果(true: 消费成功 false: 消费异常)
      */
     private Boolean result;
     /**
-     * 消息是否重试(业务消费结果为false时是否重试消息)
+     * 是否删除消息记录(业务消费结果为false时是否删除消息记录)
+     */
+    private Boolean delete;
+    /**
+     * 是否延迟重试消息(删除消息记录为true时是否延迟重试消息)
      */
     private Boolean retry;
 
-    private IdempotentBizResult(Boolean result, Boolean retry) {
+    private IdempotentBizResult(Boolean result, Boolean delete, Boolean retry) {
         this.result = result;
+        this.delete = delete;
         this.retry = retry;
     }
 
-    public static IdempotentBizResult create(Boolean result, Boolean retry) {
-        return new IdempotentBizResult(result, retry);
+    private static IdempotentBizResult create(Boolean result, Boolean delete, Boolean retry) {
+        return new IdempotentBizResult(result, delete, retry);
     }
 
     public static IdempotentBizResult createSuccess() {
-        return create(true, false);
+        return create(true, false, false);
     }
 
-    public static IdempotentBizResult createFail(Boolean retry) {
-        return create(false, retry);
+    private static IdempotentBizResult createFail(Boolean delete, Boolean retry) {
+        return create(false, delete, retry);
     }
 
-    public static IdempotentBizResult createDefaultFail() {
-        return create(false, true);
+    public static IdempotentBizResult createFail() {
+        return createFail(true, true);
+    }
+
+    public static IdempotentBizResult createFailDeleteNotRetry() {
+        return createFail(true, false);
+    }
+
+    public static IdempotentBizResult createFailNotDeleteNotRetry() {
+        return createFail(false, false);
     }
 
 }

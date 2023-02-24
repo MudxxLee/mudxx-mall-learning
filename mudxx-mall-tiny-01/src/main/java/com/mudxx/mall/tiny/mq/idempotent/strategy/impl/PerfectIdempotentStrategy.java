@@ -31,14 +31,15 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
     @Override
     public IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam) {
         IdempotentComponent component = this.getComponent();
+        if(StrUtil.isBlank(element.getMsgUniqKey())) {
+            // 消息主键为空默认不设置幂等
+            IdempotentBizResult bizResult = doBizApply(element, callbackMethod, callbackMethodParam);
+            return IdempotentResult.createSuccess(bizResult);
+        }
+        boolean setting = false;
         try {
-            if(StrUtil.isBlank(element.getMsgUniqKey())) {
-                // 消息主键为空默认不设置幂等
-                IdempotentBizResult bizResult = doBizApply(element, callbackMethod, callbackMethodParam);
-                return IdempotentResult.createSuccess(bizResult);
-            }
             // 设置消息正在消费
-            boolean setting = component.setConsuming(element, this.getConfig().getExpireMilliSeconds());
+            setting = component.setConsuming(element, this.getConfig().getExpireMilliSeconds());
             if(setting) {
                 // 设置成功
                 return doBizApplyAndUpdateStatus(element, callbackMethod, callbackMethodParam);
@@ -60,8 +61,12 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
                 }
             }
         } catch (Exception e) {
-            log.error("msgUniqKey={} 执行幂等异常 (component={}) : {} ", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage(), e);
-            return IdempotentResult.createSystemError("执行幂等异常: " + e.getMessage());
+            log.error("msgUniqKey={} 幂等处理异常 (component={}) : {} ", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage(), e);
+            if (setting) {
+                // 系统异常-删除幂等主键
+                component.delete(element);
+            }
+            return IdempotentResult.createSystemError("幂等处理异常: " + e.getMessage());
         }
     }
 
@@ -89,7 +94,7 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
             log.error("msgUniqKey={} 业务消费异常(忽略异常) (component={}): {}", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());
         }
         if(bizResult == null) {
-            bizResult = IdempotentBizResult.createDefaultFail();
+            bizResult = IdempotentBizResult.createFail();
         }
         return bizResult;
     }
@@ -106,8 +111,10 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
                 component.markConsumed(element, this.getConfig().getRetainExpireMilliSeconds());
             } else {
                 // 消费返回失败
-                log.info("msgUniqKey={} 业务消费失败,执行删除 (component={}) ", element.getMsgUniqKey(), component.getClass().getSimpleName());
-                component.delete(element);
+                if (bizResult.getDelete()) {
+                    log.info("msgUniqKey={} 业务消费失败,执行删除 (component={}) ", element.getMsgUniqKey(), component.getClass().getSimpleName());
+                    component.delete(element);
+                }
             }
         } catch (Exception e) {
             log.error("msgUniqKey={} 消费去重收尾工作异常(忽略异常) (component={}) : {} ", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());

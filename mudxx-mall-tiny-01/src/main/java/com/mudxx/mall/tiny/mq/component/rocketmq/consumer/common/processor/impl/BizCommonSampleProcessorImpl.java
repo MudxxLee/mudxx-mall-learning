@@ -52,26 +52,26 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 	}
 
 	@Override
-	public void consumeMessage(RocketMqCommonMessageExt messageExt, boolean idempotent) {
-		if (idempotent) {
-			// 消息topic
-			String topic = messageExt.getTopic();
-			// 消息标签
-			String tags = messageExt.getTags();
-			// 消息幂等主键
-			String msgUniqKey = messageExt.getKeys();
-			// 幂等消费
-			IdempotentResult result = super.idempotentConsume(topic, tags, msgUniqKey, messageExt);
-			log.info("msgUniqKey={} 消息幂等处理结果 {}", msgUniqKey, result);
-			if(IdempotentResultStatus.isThrowException(result.getResult())) {
-				throw new RuntimeException(result.getResultMsg());
-			}
-			if(result.getBizResult() != null && result.getBizResult().getRetry()) {
-				throw new RuntimeException("消息需重试");
-			}
-		} else {
-			this.commonConsume(messageExt);
+	public boolean idempotentConsume(RocketMqCommonMessageExt messageExt) {
+		// 消息topic
+		String topic = messageExt.getTopic();
+		// 消息标签
+		String tags = messageExt.getTags();
+		// 消息幂等主键
+		String msgUniqKey = messageExt.getKeys();
+		// 幂等消费
+		IdempotentResult result = super.idempotentConsume(topic, tags, msgUniqKey, messageExt);
+		log.info("msgUniqKey={} 消息幂等处理结果 {}", msgUniqKey, result);
+		// 稍后重试-执行幂等异常
+		if(IdempotentResultStatus.isErrorStatus(result.getResult())) {
+			return Boolean.FALSE;
 		}
+		IdempotentBizResult bizResult = result.getBizResult();
+		// 稍后重试-业务返回已删除幂等主键记录且需要重试
+		if(bizResult != null && bizResult.getDelete() && bizResult.getRetry()) {
+			return Boolean.FALSE;
+		}
+		return Boolean.TRUE;
 	}
 
 	@Override
@@ -79,18 +79,23 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 		try {
 			// 业务实现
 			RocketMqCommonMessageExt messageExt = (RocketMqCommonMessageExt) callbackMethodParam;
-			this.commonConsume(messageExt);
+			boolean consume = this.commonConsume(messageExt);
+			if (consume) {
+				return IdempotentBizResult.createSuccess();
+			} else {
+				return IdempotentBizResult.createFail();
+			}
 		} catch (Exception e) {
-			// TODO 业务异常,决定是否删除幂等key记录允许重新消费
-			return IdempotentBizResult.createDefaultFail();
+			// TODO 业务异常 是否删除消息记录、是否延迟重试消息
+			return IdempotentBizResult.createFail();
 		}
-		return IdempotentBizResult.createSuccess();
 	}
 
 	/**
 	 * 具体业务实现
 	 */
-	private void commonConsume(RocketMqCommonMessageExt messageExt) {
+	@Override
+	public boolean commonConsume(RocketMqCommonMessageExt messageExt) {
 		TimeInterval timer = DateUtil.timer().restart();
 		String msgId = messageExt.getMsgId();
 		String topic = messageExt.getTopic();
@@ -103,13 +108,16 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 
 			Thread.sleep(3000);
 
+			//int i = 1/0;
+
 		} catch (Exception e) {
 			log.error("msgId={} 消息处理异常: {}", msgId, e.getMessage(), e);
-			// TODO 异常处理
-			throw new RuntimeException(e);
+			// 稍后重试
+			return Boolean.FALSE;
 		} finally {
-			//log.info("msgId={} 消息处理耗时: {}ms", msgId, timer.intervalRestart());
+			log.info("msgId={} 消息处理耗时: {}ms", msgId, timer.intervalRestart());
 		}
+		return Boolean.TRUE;
 	}
 
 }

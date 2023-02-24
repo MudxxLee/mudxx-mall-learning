@@ -1,5 +1,6 @@
 package com.mudxx.mall.tiny.mq.idempotent.common;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.ToString;
 
@@ -61,11 +62,7 @@ public class IdempotentResult implements Serializable {
     }
 
     public static IdempotentResult createSystemError(String resultMsg) {
-        return create(IdempotentResultStatus.SYSTEM_ERROR, resultMsg);
-    }
-
-    public static IdempotentResult createSystemError() {
-        return createSystemError(IdempotentResultStatus.SYSTEM_ERROR.getDesc());
+        return create(IdempotentResultStatus.SYSTEM_ERROR, StrUtil.blankToDefault(resultMsg, IdempotentResultStatus.SYSTEM_ERROR.getDesc()));
     }
 
 }

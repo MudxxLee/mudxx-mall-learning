@@ -10,9 +10,15 @@ public interface IBizCommonSampleProcessor {
 	/**
 	 * 消费消息
 	 * @param messageExt 消息
-	 * @param idempotent 是否幂等消费
 	 * @return
 	 */
-	void consumeMessage(RocketMqCommonMessageExt messageExt, boolean idempotent);
+	boolean idempotentConsume(RocketMqCommonMessageExt messageExt);
+
+	/**
+	 * 消费消息
+	 * @param messageExt 消息
+	 * @return
+	 */
+	boolean commonConsume(RocketMqCommonMessageExt messageExt);
 
 }

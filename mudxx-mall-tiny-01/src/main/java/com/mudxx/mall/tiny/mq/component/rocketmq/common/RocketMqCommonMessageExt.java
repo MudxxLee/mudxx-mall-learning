@@ -22,16 +22,18 @@ public class RocketMqCommonMessageExt implements Serializable {
     private String tags;
     private String keys;
     private byte[] body;
+    private int reconsumeTimes;
 
     public RocketMqCommonMessageExt() {
 
     }
 
-    public RocketMqCommonMessageExt(String msgId, String topic, String tags, String keys, byte[] body) {
+    public RocketMqCommonMessageExt(String msgId, String topic, String tags, String keys, byte[] body, int reconsumeTimes) {
         this.msgId = msgId;
         this.topic = topic;
         this.tags = tags;
         this.keys = keys;
         this.body = body;
+        this.reconsumeTimes = reconsumeTimes;
     }
 }

@@ -25,7 +25,7 @@ public class NormalIdempotentStrategy implements IdempotentStrategy {
             log.error("msgUniqKey={} 业务消费异常(忽略异常): {}", element.getMsgUniqKey(), e.getMessage());
         }
         if(bizResult == null) {
-            bizResult = IdempotentBizResult.createDefaultFail();
+            bizResult = IdempotentBizResult.createFail();
         }
         return IdempotentResult.createSuccess(bizResult);
     }

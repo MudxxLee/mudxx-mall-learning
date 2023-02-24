@@ -52,6 +52,7 @@ public class BizCommonSampleConsumer {
             TimeInterval timer = DateUtil.timer().restart();
             IBizCommonSampleProcessor processor = SpringUtil.getBean(IBizCommonSampleProcessor.class);
             for (MessageExt messageExt : messageExtList) {
+                boolean result = false;
                 try {
                     // for循环单线程消费
                     RocketMqCommonMessageExt commonMessageExt = RocketMqCommonMessageExt.builder()
@@ -60,21 +61,23 @@ public class BizCommonSampleConsumer {
                             .tags(messageExt.getTags())
                             .keys(messageExt.getKeys())
                             .body(messageExt.getBody())
+                            .reconsumeTimes(messageExt.getReconsumeTimes())
                             .build();
-                    processor.consumeMessage(commonMessageExt, true);
+                    result = processor.idempotentConsume(commonMessageExt);
                 } catch (Throwable e) {
-                    int reconsumeTimes = messageExt.getReconsumeTimes();
-                    log.error("msgId={} reconsumeTimes={}  消息处理异常: {}", messageExt.getMsgId(), reconsumeTimes, e.getMessage(), e);
-                    if(reconsumeTimes < 2) {
-                        // 稍后重试
+                    log.error("msgId={} 消费异常(reconsumeTimes={}) {}", messageExt.getMsgId(), messageExt.getReconsumeTimes(), e.getMessage(), e);
+                }
+                if ( ! result) {
+                    if(messageExt.getReconsumeTimes() < 2) {
+                        log.error("msgId={} 消费失败,稍后重试(reconsumeTimes={})", messageExt.getMsgId(), messageExt.getReconsumeTimes());
                         return ConsumeConcurrentlyStatus.RECONSUME_LATER;
                     } else {
                         // TODO 记录异常
-                        log.error("msgId={} reconsumeTimes={}  超过重试次数,记录异常", messageExt.getMsgId(), reconsumeTimes);
+                        log.error("msgId={} 消费失败,超过重试次数,记录异常不再重试(reconsumeTimes={})", messageExt.getMsgId(), messageExt.getReconsumeTimes());
                     }
                 }
             }
-            log.info("[{}:{}] rocketmq common-message listener 本次拉取数量: {} 耗时{}ms", context.getMessageQueue().getTopic(),
+            log.info("[topic:{} queueId:{}] rocketmq common-message listener 本次拉取数量: {} 耗时{}ms", context.getMessageQueue().getTopic(),
                     context.getMessageQueue().getQueueId(), messageExtList.size(), timer.intervalRestart());
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         }
