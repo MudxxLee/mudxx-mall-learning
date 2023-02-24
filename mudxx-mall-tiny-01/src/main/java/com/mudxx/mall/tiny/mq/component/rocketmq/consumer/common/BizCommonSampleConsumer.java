@@ -2,21 +2,17 @@ package com.mudxx.mall.tiny.mq.component.rocketmq.consumer.common;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
-import cn.hutool.core.util.StrUtil;
 import com.mudxx.mall.tiny.common.utils.SpringUtil;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessageExt;
 import com.mudxx.mall.tiny.mq.component.rocketmq.config.BizCommonPropertiesConfig;
-import com.mudxx.mall.tiny.mq.component.rocketmq.config.properties.ConsumerBasicProperties;
-import com.mudxx.mall.tiny.mq.component.rocketmq.config.properties.ConsumerProperties;
+import com.mudxx.mall.tiny.mq.component.rocketmq.consumer.RocketMqConsumerFactory;
 import com.mudxx.mall.tiny.mq.component.rocketmq.consumer.common.processor.IBizCommonSampleProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +21,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 消息 并发消费者
+ * 并发消费者 无序消息（可靠同步，可靠异步，单向，延迟）
+ * 1、并发消费的消费速度要比有序消费更快
+ * 2、并发消费模式返回ConsumeConcurrentlyStatus.RECONSUME_LATER后，要过好几秒甚至十几秒才会再次消费,同一个消息到达最大消费次数之后就不会再出现
+ *
  * @author laiw
  * @date 2023/2/14 10:22
  */
@@ -39,54 +38,11 @@ public class BizCommonSampleConsumer {
 
     @Bean(name = "bizCommonSamplePushConsumer")
     public DefaultMQPushConsumer getMonitorRocketMqConsumer() {
-        String nameServer = propertiesConfig.getNameServer();
-        if (StrUtil.isBlank(nameServer)) {
-            throw new RuntimeException(StrUtil.format("rocketmq nameServer is null (consumer={})", this.getClass().getSimpleName()));
-        }
-        ConsumerProperties properties = propertiesConfig.getConsumer().getBizSample();
-        if (StrUtil.isBlank(properties.getGroupName())) {
-            throw new RuntimeException(StrUtil.format("rocketmq consumer groupName is null (consumer={})", this.getClass().getSimpleName()));
-        }
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(properties.getGroupName());
-        consumer.setMessageModel(MessageModel.CLUSTERING);
-        consumer.setNamesrvAddr(nameServer);
-        if(StrUtil.isNotBlank(properties.getInstanceName())) {
-            consumer.setInstanceName(properties.getInstanceName());
-        }
-        ConsumerBasicProperties basicProperties = properties.getBasic();
-        if(basicProperties != null) {
-            if(basicProperties.getConsumeThreadMin() != null) {
-                consumer.setConsumeThreadMin(basicProperties.getConsumeThreadMin());
-            }
-            if(basicProperties.getConsumeThreadMax() != null) {
-                consumer.setConsumeThreadMax(basicProperties.getConsumeThreadMax());
-            }
-            if(basicProperties.getPullInterval() != null) {
-                consumer.setPullInterval(basicProperties.getPullInterval());
-            }
-            if(basicProperties.getPullBatchSize() != null) {
-                consumer.setPullBatchSize(basicProperties.getPullBatchSize());
-            }
-            if(basicProperties.getConsumeMessageBatchMaxSize() != null) {
-                consumer.setConsumeMessageBatchMaxSize(basicProperties.getConsumeMessageBatchMaxSize());
-            }
-        }
-        // 设置监听
-        consumer.registerMessageListener(new BizMessageListenerConcurrentlyImpl());
-        String topic = properties.getTopic();
-        String tags = properties.getTags();
-        try {
-            // 订阅多个topic,代码行增加consumer.subscribe(topic, tags)
-            consumer.subscribe(topic, tags);
-            // 修改系统变量,保障启动多个不同ip的消费者
-            //System.setProperty("rocketmq.client.name", "bizCommonSamplePushConsumer");
-            consumer.start();
-            log.info("rocketmq consumer is start !!! nameServer={}, groupName={}, topic={}", nameServer, properties.getGroupName(), topic);
-        } catch (MQClientException e) {
-            log.error("rocketmq consumer is error !!! nameServer={}, groupName={}, topic={}", nameServer, properties.getGroupName(), topic, e);
-            throw new RuntimeException("rocketmq consumer is error", e);
-        }
-        return consumer;
+        return RocketMqConsumerFactory.getMonitorRocketMqConsumer(
+                propertiesConfig.getNameServer(),
+                propertiesConfig.getConsumer().getBizSample(),
+                new BizMessageListenerConcurrentlyImpl()
+        );
     }
 
     private static class BizMessageListenerConcurrentlyImpl implements MessageListenerConcurrently {
@@ -114,7 +70,7 @@ public class BizCommonSampleConsumer {
                         return ConsumeConcurrentlyStatus.RECONSUME_LATER;
                     } else {
                         // TODO 记录异常
-                        
+                        log.error("msgId={} reconsumeTimes={}  超过重试次数,记录异常", messageExt.getMsgId(), reconsumeTimes);
                     }
                 }
             }

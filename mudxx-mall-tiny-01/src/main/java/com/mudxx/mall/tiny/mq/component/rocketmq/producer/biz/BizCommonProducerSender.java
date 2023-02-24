@@ -1,7 +1,7 @@
 package com.mudxx.mall.tiny.mq.component.rocketmq.producer.biz;
 
 import com.mudxx.mall.tiny.mq.component.rocketmq.config.BizCommonPropertiesConfig;
-import com.mudxx.mall.tiny.mq.component.rocketmq.producer.DefaultRocketMqProducerSender;
+import com.mudxx.mall.tiny.mq.component.rocketmq.producer.DefaultCommonProducerSender;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConditionalOnProperty(prefix="rocketmq.biz-common.producer", value="enabled", havingValue="true")
-public class BizCommonProducerSender extends DefaultRocketMqProducerSender {
+public class BizCommonProducerSender extends DefaultCommonProducerSender {
 
     public BizCommonProducerSender(BizCommonPropertiesConfig config){
         super(config.getNameServer(), config.getProducer());

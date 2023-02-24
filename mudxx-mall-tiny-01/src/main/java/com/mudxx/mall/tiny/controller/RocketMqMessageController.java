@@ -4,7 +4,9 @@ import com.mudxx.mall.tiny.common.api.CommonResult;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonDelay;
 import com.mudxx.mall.tiny.mq.component.rocketmq.common.RocketMqCommonMessage;
 import com.mudxx.mall.tiny.mq.component.rocketmq.config.BizCommonPropertiesConfig;
+import com.mudxx.mall.tiny.mq.component.rocketmq.config.BizOrderlyPropertiesConfig;
 import com.mudxx.mall.tiny.mq.component.rocketmq.producer.biz.BizCommonProducerSender;
+import com.mudxx.mall.tiny.mq.component.rocketmq.producer.biz.BizOrderlyProducerSender;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +26,12 @@ public class RocketMqMessageController {
 
     @Autowired
     private BizCommonPropertiesConfig bizCommonPropertiesConfig;
+    @Autowired
+    private BizOrderlyPropertiesConfig bizOrderlyPropertiesConfig;
     @Autowired(required = false)
     private BizCommonProducerSender bizCommonProducerSender;
+    @Autowired(required = false)
+    private BizOrderlyProducerSender bizOrderlyProducerSender;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
@@ -47,6 +53,16 @@ public class RocketMqMessageController {
         message.setBody(msg.getBytes(StandardCharsets.UTF_8));
         message.setKeys(keys);
         return CommonResult.success(bizCommonProducerSender.sendDelayMessage(message, RocketMqCommonDelay.S10));
+    }
+
+    @ApiOperation("发送RocketMQ消息")
+    @PostMapping("/send-orderly")
+    @ResponseBody
+    public CommonResult sendOrderly(@RequestParam("msg") String msg, @RequestParam("keys") String keys) {
+        RocketMqCommonMessage message = new RocketMqCommonMessage(bizOrderlyPropertiesConfig.getConsumer().getBizSample());
+        message.setBody(msg.getBytes(StandardCharsets.UTF_8));
+        message.setKeys(keys);
+        return CommonResult.success(bizOrderlyProducerSender.sendOrderlyMessage(message));
     }
 
     @ApiOperation("发送RocketMQ延迟消息")

@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
  */
 @Data
 @Component
-@ConfigurationProperties(prefix = "rocketmq.biz-common")
-public class BizCommonPropertiesConfig {
+@ConfigurationProperties(prefix = "rocketmq.biz-orderly")
+public class BizOrderlyPropertiesConfig {
 
     private String nameServer;
     private ProducerProperties producer;

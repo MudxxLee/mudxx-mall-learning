@@ -11,19 +11,9 @@ import org.apache.rocketmq.client.producer.DefaultMQProducer;
  * @date 2023/2/13 17:54
  */
 @Slf4j
-public class DefaultRocketMqProducer {
+public class RocketMqProducerFactory {
 
-    private final DefaultMQProducer producer;
-
-    public DefaultRocketMqProducer(String nameServer, ProducerProperties properties){
-        this.producer = getDefaultMQProducer(nameServer, properties);
-    }
-
-    public DefaultMQProducer getProducer() {
-        return producer;
-    }
-
-    private DefaultMQProducer getDefaultMQProducer(String nameServer, ProducerProperties properties) {
+    public static DefaultMQProducer getDefaultMQProducer(String nameServer, ProducerProperties properties) {
         if (StrUtil.isBlank(nameServer)) {
             throw new RuntimeException("rocketmq producer nameServer is null !!!");
         }
@@ -36,6 +26,8 @@ public class DefaultRocketMqProducer {
                 producer.setInstanceName(properties.getInstanceName());
             }
             producer.setNamesrvAddr(nameServer);
+            // 不开启vip通道 (当消费者监听顺序消息时，消费者也需设置为VipChannelEnabled(false)，否则消费不到)
+            producer.setVipChannelEnabled(false);
             // 允许发送的最大消息体大小4M
             producer.setMaxMessageSize(4194304);
             // 默认的发送超时时间
