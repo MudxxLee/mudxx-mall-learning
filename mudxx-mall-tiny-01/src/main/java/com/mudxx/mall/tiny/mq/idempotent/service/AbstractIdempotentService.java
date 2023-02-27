@@ -72,6 +72,7 @@ public abstract class AbstractIdempotentService {
 
 	/**
 	 * 实现消息幂等策略
+	 * 	业务需根据返参结果做相应的逻辑处理
 	 * @param topic 消息topic
 	 * @param tags 消息标签
 	 * @param msgUniqKey 消息幂等主键
@@ -96,6 +97,7 @@ public abstract class AbstractIdempotentService {
 
 	/**
 	 * 业务真正消费方法(在幂等设置成功后将会调用)
+	 * 	需按业务场景封装返回结果
 	 * @param callbackMethodParam 方法入参
 	 * @return IdempotentBizResult
 	 */
@@ -106,16 +108,8 @@ public abstract class AbstractIdempotentService {
 		return applicationName;
 	}
 
-	public void setApplicationName(String applicationName) {
-		this.applicationName = applicationName;
-	}
-
 	public IdempotentStrategy getStrategy() {
 		return strategy;
-	}
-
-	public void setStrategy(IdempotentStrategy strategy) {
-		this.strategy = strategy;
 	}
 
 }

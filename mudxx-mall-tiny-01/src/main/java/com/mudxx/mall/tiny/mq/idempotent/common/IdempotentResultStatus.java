@@ -42,7 +42,14 @@ public enum IdempotentResultStatus  {
         return null;
     }
 
-    public static boolean isErrorStatus(String status) {
+    public static boolean equalsStatus(String status, IdempotentResultStatus statusEnum) {
+        if (StrUtil.isBlank(status) || statusEnum == null) {
+            return false;
+        }
+        return StrUtil.equals(status, statusEnum.getStatus());
+    }
+
+    public static boolean containsErrorStatus(String status) {
         IdempotentResultStatus resultStatus = getIdempotentResultStatus(status);
         if (resultStatus == null) {
             return false;

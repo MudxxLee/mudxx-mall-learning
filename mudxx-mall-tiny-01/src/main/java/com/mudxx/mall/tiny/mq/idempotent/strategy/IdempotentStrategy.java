@@ -22,4 +22,25 @@ public interface IdempotentStrategy {
      */
     IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam);
 
+    /**
+     * 执行真正的消费(默认实现)
+     * @param callbackMethod 回调方法
+     * @param callbackMethodParam 回调方法参数
+     * @return
+     */
+    default IdempotentBizResult defaultBizApply(final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
+        IdempotentBizResult bizResult = null;
+        try {
+            // 执行真正的消费
+            bizResult = callbackMethod.apply(callbackMethodParam);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        if(bizResult == null) {
+            // 默认删除且重试
+            bizResult = IdempotentBizResult.createFail();
+        }
+        return bizResult;
+    }
+
 }

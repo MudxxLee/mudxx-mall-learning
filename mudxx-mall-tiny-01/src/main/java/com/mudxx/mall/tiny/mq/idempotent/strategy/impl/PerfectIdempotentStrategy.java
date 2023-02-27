@@ -33,8 +33,7 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
         IdempotentComponent component = this.getComponent();
         if(StrUtil.isBlank(element.getMsgUniqKey())) {
             // 消息主键为空默认不设置幂等
-            IdempotentBizResult bizResult = doBizApply(element, callbackMethod, callbackMethodParam);
-            return IdempotentResult.createSuccess(bizResult);
+            return IdempotentResult.createSuccess(this.defaultBizApply(callbackMethod, callbackMethodParam));
         }
         boolean setting = false;
         try {
@@ -76,27 +75,10 @@ public class PerfectIdempotentStrategy implements IdempotentStrategy {
      */
     private IdempotentResult doBizApplyAndUpdateStatus(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
         // 执行真正的消费
-        IdempotentBizResult bizResult = this.doBizApply(element, callbackMethod, callbackMethodParam);
+        IdempotentBizResult bizResult = this.defaultBizApply(callbackMethod, callbackMethodParam);
         // 消费失败会删除消费记录，消费成功则更新消费状态
         this.doUpdateOrDelete(element, bizResult);
         return IdempotentResult.createSuccess(bizResult);
-    }
-
-    /**
-     * 执行真正的消费
-     */
-    private IdempotentBizResult doBizApply(IdempotentElement element, final Function<Object, IdempotentBizResult> callbackMethod, final Object callbackMethodParam) {
-        IdempotentBizResult bizResult = null;
-        try {
-            // 执行真正的消费
-            bizResult = callbackMethod.apply(callbackMethodParam);
-        } catch (Throwable e) {
-            log.error("msgUniqKey={} 业务消费异常(忽略异常) (component={}): {}", element.getMsgUniqKey(), component.getClass().getSimpleName(), e.getMessage());
-        }
-        if(bizResult == null) {
-            bizResult = IdempotentBizResult.createFail();
-        }
-        return bizResult;
     }
 
     /**

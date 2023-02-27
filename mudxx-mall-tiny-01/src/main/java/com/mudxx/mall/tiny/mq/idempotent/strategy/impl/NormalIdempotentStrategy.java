@@ -18,15 +18,6 @@ public class NormalIdempotentStrategy implements IdempotentStrategy {
 
     @Override
     public IdempotentResult invoke(IdempotentElement element, Function<Object, IdempotentBizResult> callbackMethod, Object callbackMethodParam) {
-        IdempotentBizResult bizResult = null;
-        try {
-            bizResult = callbackMethod.apply(callbackMethodParam);
-        } catch (Exception e) {
-            log.error("msgUniqKey={} 业务消费异常(忽略异常): {}", element.getMsgUniqKey(), e.getMessage());
-        }
-        if(bizResult == null) {
-            bizResult = IdempotentBizResult.createFail();
-        }
-        return IdempotentResult.createSuccess(bizResult);
+        return IdempotentResult.createSuccess(defaultBizApply(callbackMethod, callbackMethodParam));
     }
 }

@@ -54,4 +54,8 @@ public class IdempotentBizResult implements Serializable {
         return createFail(false, false);
     }
 
+    public boolean isRetry() {
+        return delete && retry;
+    }
+
 }

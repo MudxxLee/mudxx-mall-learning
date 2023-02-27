@@ -62,13 +62,17 @@ public class BizCommonSampleProcessorImpl extends AbstractIdempotentService impl
 		// 幂等消费
 		IdempotentResult result = super.idempotentConsume(topic, tags, msgUniqKey, messageExt);
 		log.info("msgUniqKey={} 消息幂等处理结果 {}", msgUniqKey, result);
-		// 稍后重试-执行幂等异常
-		if(IdempotentResultStatus.isErrorStatus(result.getResult())) {
+		// TODO 执行幂等异常-业务自行判定是否重试以及重试类型(如延迟重试)
+		if(IdempotentResultStatus.containsErrorStatus(result.getResult())) {
 			return Boolean.FALSE;
 		}
+		// TODO 相同主键的消息正在消费中-业务自行判定是否重试以及重试类型(如延迟重试)
+		if(IdempotentResultStatus.equalsStatus(result.getResult(), IdempotentResultStatus.CONSUMING)) {
+			return Boolean.FALSE;
+		}
+		// TODO 业务结果处理-业务自行判定是否重试以及重试类型(如延迟重试)
 		IdempotentBizResult bizResult = result.getBizResult();
-		// 稍后重试-业务返回已删除幂等主键记录且需要重试
-		if(bizResult != null && bizResult.getDelete() && bizResult.getRetry()) {
+		if(bizResult != null && bizResult.isRetry()) {
 			return Boolean.FALSE;
 		}
 		return Boolean.TRUE;
