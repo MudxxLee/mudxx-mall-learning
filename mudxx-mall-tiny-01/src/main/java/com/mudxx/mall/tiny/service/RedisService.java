@@ -32,4 +32,13 @@ public interface RedisService {
      */
     Long increment(String key, long delta);
 
+    /**
+     * 存储数据(true则设置成功)
+     * @param key
+     * @param value
+     * @param expire
+     * @return
+     */
+    boolean execute(String key, String value, long expire);
+
 }
